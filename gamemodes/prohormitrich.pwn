@@ -109,6 +109,9 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
                 TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #1",messageid);
             }
         }
+        else if(!strfind(message,"/help")){
+            TGSendMessage(tgHandle,chatid,"Список доступных команд\n\n/stats - просмотр статистики чата\n/statsme - просмотр личной статистики в чате",messageid);
+        }
 
         printf("[%s] %s(%d): %s",_:chatid,username,_:fromid,message);
     }
