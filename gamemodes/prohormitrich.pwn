@@ -1,6 +1,7 @@
 #include <utils>
 #include <tgconnector>
 #include <a_mysql>
+#include <string>
 
 #define TG_BOT_TOKEN "2003549499:AAEH0TD_KT8ns2Z9Nez3FYzl7OGuUMAHchs"
 
@@ -64,6 +65,26 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             mysql_query(dbHandle,query,false);
             mysql_format(dbHandle,query,sizeof(query),"update`chats`set`messages`=`messages`+'1'where`id`='%e'",_:chatid);
             mysql_query(dbHandle,query,false);
+        }
+
+        if(!strfind(message,"/stats")){
+            mysql_format(dbHandle,query,sizeof(query),"select*from`chats`where`id`='%e'",_:chatid);
+            cache_chats=mysql_query(dbHandle,query,true);
+            if(cache_get_row_count(dbHandle)){
+                new messages,
+                    dateofregister[32];
+
+                messages=cache_get_field_content_int(0,"messages",dbHandle);
+                cache_get_field_content(0,"dateofregister",dateofregister,dbHandle,sizeof(dateofregister));
+
+                new string[2*95-(2*2)+32+11];
+
+                format(string,sizeof(string),"Статистика чата\n\nДата регистрации чата - %s\nКоличество сообщений с момента регистрации - %i",dateofregister,messages);
+                TGSendMessage(tgHandle,chatid,string,messageid);
+            }
+            else{
+                TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #1",messageid);
+            }
         }
 
         printf("[%s] %s(%d): %s",_:chatid,username,_:fromid,message);
