@@ -36,14 +36,35 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
         new message[128],
             username[24],
             chatname[56],
-            TGChatId:chatid[128];
+            TGChatId:chatid[128],
+            query[256];
         
         TGCacheGetMessage(message,sizeof(message));
         TGCacheGetUserName(username,sizeof(username));
         TGCacheGetChatId(chatid,sizeof(chatid));
         TGCacheGetChatName(chatname,sizeof(chatname));
 
-        //TGSendMessage(tgHandle,chatid,"ответ",messageid);
+        mysql_format(dbHandle,query,sizeof(query),"select`id`from`chats`where`id`='%e'",_:chatid);
+        new Cache:cache_chats=mysql_query(dbHandle,query,true);
+        if(!cache_get_row_count(dbHandle)){
+            cache_delete(cache_chats,dbHandle);
+            mysql_format(dbHandle,query,sizeof(query),"insert into`chats`(`id`)values('%e')",_:chatid);
+            mysql_query(dbHandle,query,false);
+        }
+
+        mysql_format(dbHandle,query,sizeof(query),"select`id`from`users`where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
+        new Cache:cache_users=mysql_query(dbHandle,query,true);
+        if(!cache_get_row_count(dbHandle)){
+            cache_delete(cache_users,dbHandle);
+            mysql_format(dbHandle,query,sizeof(query),"insert into`users`(`userid`,`username`,`chatid`)values('%i','%e','%e')",_:fromid,username,_:chatid);
+            mysql_query(dbHandle,query,false);
+        }
+        else{
+            mysql_format(dbHandle,query,sizeof(query),"update`users`set`messages`=`messages`+'1'where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
+            mysql_query(dbHandle,query,false);
+            mysql_format(dbHandle,query,sizeof(query),"update`chats`set`messages`=`messages`+'1'where`id`='%e'",_:chatid);
+            mysql_query(dbHandle,query,false);
+        }
 
         printf("[%s] %s(%d): %s",_:chatid,username,_:fromid,message);
     }
