@@ -67,7 +67,28 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             mysql_query(dbHandle,query,false);
         }
 
-        if(!strfind(message,"/stats")){
+        if(!strfind(message,"/statsme")){
+            mysql_format(dbHandle,query,sizeof(query),"select*from`users`where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
+            cache_users=mysql_query(dbHandle,query,true);
+            if(cache_get_row_count(dbHandle)){
+                new messages,
+                    dateofregister[32];
+
+                messages=cache_get_field_content_int(0,"messages",dbHandle);
+                cache_get_field_content(0,"dateofregister",dateofregister,dbHandle,sizeof(dateofregister));
+
+                new string[2*113-(2*2)+32+11];
+
+                format(string,sizeof(string),"Личная статистика в чате\n\nДата регистрации в чате - %s\nКоличество сообщений с момента регистрации в чате - %i",dateofregister,messages);
+                TGSendMessage(tgHandle,chatid,string,messageid);
+
+                cache_delete(cache_users,dbHandle);
+            }
+            else{
+                TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #2",messageid);
+            }
+        }
+        else if(!strfind(message,"/stats")){
             mysql_format(dbHandle,query,sizeof(query),"select*from`chats`where`id`='%e'",_:chatid);
             cache_chats=mysql_query(dbHandle,query,true);
             if(cache_get_row_count(dbHandle)){
@@ -81,6 +102,8 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
 
                 format(string,sizeof(string),"Статистика чата\n\nДата регистрации чата - %s\nКоличество сообщений с момента регистрации - %i",dateofregister,messages);
                 TGSendMessage(tgHandle,chatid,string,messageid);
+
+                cache_delete(cache_chats,dbHandle);
             }
             else{
                 TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #1",messageid);
