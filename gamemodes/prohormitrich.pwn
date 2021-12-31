@@ -3,7 +3,7 @@
 #include <a_mysql>
 #include <string>
 
-#define TG_BOT_TOKEN "2003549499:AAEH0TD_KT8ns2Z9Nez3FYzl7OGuUMAHchs"
+#define TG_BOT_TOKEN ""
 
 #define MYSQL_HOST "localhost"
 #define MYSQL_USER "root"
@@ -111,6 +111,9 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
         }
         else if(!strfind(message,"/help")){
             TGSendMessage(tgHandle,chatid,"Список доступных команд\n\n/stats - просмотр статистики чата\n/statsme - просмотр личной статистики в чате",messageid);
+        }
+        else if(!strfind(message,"/updates")){
+            TGSendMessage(tgHandle,chatid,"Обновление 0.1\n\nДобавлен счётчик сообщений группы и пользователей.\nДобавлены команды /stats и /statsme",messageid);
         }
 
         printf("[%s] %s(%d): %s",_:chatid,username,_:fromid,message);
