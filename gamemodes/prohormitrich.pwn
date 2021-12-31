@@ -2,8 +2,9 @@
 #include <tgconnector>
 #include <a_mysql>
 #include <string>
+#include <float>
 
-#define TG_BOT_TOKEN ""
+#define TG_BOT_TOKEN "1472571056:AAFpUrV9KGf8OpUliFnzmiNbZPIEYTxgbJQ"
 
 #define MYSQL_HOST "localhost"
 #define MYSQL_USER "root"
@@ -68,18 +69,22 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
         }
 
         if(!strfind(message,"/statsme")){
-            mysql_format(dbHandle,query,sizeof(query),"select*from`users`where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
+            mysql_format(dbHandle,query,sizeof(query),"select*,DAY(NOW())-DAY(`dateofregister`)as`days`from`users`where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
             cache_users=mysql_query(dbHandle,query,true);
             if(cache_get_row_count(dbHandle)){
                 new messages,
-                    dateofregister[32];
+                    dateofregister[32],
+                    days;
 
                 messages=cache_get_field_content_int(0,"messages",dbHandle);
                 cache_get_field_content(0,"dateofregister",dateofregister,dbHandle,sizeof(dateofregister));
+                days=cache_get_field_content_int(0,"days",dbHandle);
 
-                new string[2*113-(2*2)+32+11];
+                new Float:messagesperday=float(messages)/days;
 
-                format(string,sizeof(string),"Личная статистика в чате\n\nДата регистрации в чате - %s\nКоличество сообщений с момента регистрации в чате - %i",dateofregister,messages);
+                new string[2*157-(2*3)+32+11+11];
+
+                format(string,sizeof(string),"Личная статистика в чате\n\nДата регистрации в чате - %s\nКоличество сообщений с момента регистрации в чате - %i\nСреднее количество сообщений в день в чате - %.2f",dateofregister,messages,messagesperday);
                 TGSendMessage(tgHandle,chatid,string,messageid);
 
                 cache_delete(cache_users,dbHandle);
@@ -89,18 +94,22 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             }
         }
         else if(!strfind(message,"/stats")){
-            mysql_format(dbHandle,query,sizeof(query),"select*from`chats`where`id`='%e'",_:chatid);
+            mysql_format(dbHandle,query,sizeof(query),"select*,DAY(NOW())-DAY(`dateofregister`)as`days`from`chats`where`id`='%e'",_:chatid);
             cache_chats=mysql_query(dbHandle,query,true);
             if(cache_get_row_count(dbHandle)){
                 new messages,
-                    dateofregister[32];
-
+                    dateofregister[32],
+                    days;
+                    
                 messages=cache_get_field_content_int(0,"messages",dbHandle);
                 cache_get_field_content(0,"dateofregister",dateofregister,dbHandle,sizeof(dateofregister));
+                days=cache_get_field_content_int(0,"days",dbHandle);
 
-                new string[2*95-(2*2)+32+11];
+                new Float:messagesperday=float(messages)/days;
 
-                format(string,sizeof(string),"Статистика чата\n\nДата регистрации чата - %s\nКоличество сообщений с момента регистрации - %i",dateofregister,messages);
+                new string[2*139-(2*2)+32+11];
+                
+                format(string,sizeof(string),"Статистика чата\n\nДата регистрации чата - %s\nКоличество сообщений с момента регистрации - %i\nСреднее количество сообщений в день - %.2f",dateofregister,messages,messagesperday);
                 TGSendMessage(tgHandle,chatid,string,messageid);
 
                 cache_delete(cache_chats,dbHandle);
