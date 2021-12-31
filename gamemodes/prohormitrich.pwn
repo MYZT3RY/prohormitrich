@@ -4,12 +4,12 @@
 #include <string>
 #include <float>
 
-#define TG_BOT_TOKEN "1472571056:AAFpUrV9KGf8OpUliFnzmiNbZPIEYTxgbJQ"
+#define TG_BOT_TOKEN "2003549499:AAEH0TD_KT8ns2Z9Nez3FYzl7OGuUMAHchs"
 
 #define MYSQL_HOST "localhost"
-#define MYSQL_USER "root"
+#define MYSQL_USER "prohor"
 #define MYSQL_DATABASE "prohormitrich"
-#define MYSQL_PASSWORD ""
+#define MYSQL_PASSWORD "AW22rr03@!!#qwed24"
 
 new TGBot:tgHandle,
     dbHandle;
@@ -177,13 +177,13 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
                 strcat(string,"Рейтинг участников чата\n\n");
 
                 for(new i=0; i<cache_get_row_count(dbHandle); i++){
-                    cache_get_field_content(i,"username",localUsername,dbHandle,sizeof(username));
+                    cache_get_field_content(i,"username",localUsername,dbHandle,sizeof(localUsername));
                     messages=cache_get_field_content_int(i,"messages",dbHandle);
                     days=cache_get_field_content_int(i,"days",dbHandle);
 
                     new Float:messagesperday=float(messages)/days;
 
-                    format(tempString,sizeof(tempString),"%i. @%s (%i сообщений, %.2f сообщений в день)\n",i+1,username,messages,messagesperday);
+                    format(tempString,sizeof(tempString),"%i. @%s (%i сообщений, %.2f сообщений в день)\n",i+1,localUsername,messages,messagesperday);
                     strcat(string,tempString);
                 }
 
