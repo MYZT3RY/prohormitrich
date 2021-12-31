@@ -38,33 +38,36 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
     if(tgHandle == bot){
         new message[128],
             username[24],
-            chatname[56],
             TGChatId:chatid[128],
             query[256];
         
         TGCacheGetMessage(message,sizeof(message));
         TGCacheGetUserName(username,sizeof(username));
         TGCacheGetChatId(chatid,sizeof(chatid));
-        TGCacheGetChatName(chatname,sizeof(chatname));
 
         mysql_format(dbHandle,query,sizeof(query),"select`id`from`chats`where`id`='%e'",_:chatid);
         new Cache:cache_chats=mysql_query(dbHandle,query,true);
+
         if(!cache_get_row_count(dbHandle)){
             cache_delete(cache_chats,dbHandle);
+
             mysql_format(dbHandle,query,sizeof(query),"insert into`chats`(`id`)values('%e')",_:chatid);
             mysql_query(dbHandle,query,false);
         }
 
         mysql_format(dbHandle,query,sizeof(query),"select`id`from`users`where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
         new Cache:cache_users=mysql_query(dbHandle,query,true);
+
         if(!cache_get_row_count(dbHandle)){
             cache_delete(cache_users,dbHandle);
+
             mysql_format(dbHandle,query,sizeof(query),"insert into`users`(`userid`,`username`,`chatid`)values('%i','%e','%e')",_:fromid,username,_:chatid);
             mysql_query(dbHandle,query,false);
         }
         else{
             mysql_format(dbHandle,query,sizeof(query),"update`users`set`messages`=`messages`+'1'where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
             mysql_query(dbHandle,query,false);
+
             mysql_format(dbHandle,query,sizeof(query),"update`chats`set`messages`=`messages`+'1'where`id`='%e'",_:chatid);
             mysql_query(dbHandle,query,false);
         }
@@ -72,6 +75,7 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
         if(!strfind(message,"/statsme")){
             mysql_format(dbHandle,query,sizeof(query),"select*,DAY(NOW())-DAY(`dateofregister`)as`days`from`users`where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
             cache_users=mysql_query(dbHandle,query,true);
+
             if(cache_get_row_count(dbHandle)){
                 new messages,
                     dateofregister[32],
@@ -97,6 +101,7 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
         else if(!strfind(message,"/stats")){
             mysql_format(dbHandle,query,sizeof(query),"select*,DAY(NOW())-DAY(`dateofregister`)as`days`from`chats`where`id`='%e'",_:chatid);
             cache_chats=mysql_query(dbHandle,query,true);
+
             if(cache_get_row_count(dbHandle)){
                 new messages,
                     dateofregister[32],
@@ -110,7 +115,7 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
 
                 new string[2*139-(2*2)+32+11];
                 
-                format(string,sizeof(string),"Статистика чата\n\nДата регистрации чата - %s\nКоличество сообщений с момента регистрации - %i\nСреднее количество сообщений в день - %.2f",dateofregister,messages,messagesperday);
+                format(string,sizeof(string),"Статистика чата\n\nДата регистрации чата - %s\nКоличество сообщений с момента регистрации - %i\nСреднее количество сообщений в день - %.2f\n%i",dateofregister,messages,messagesperday);
                 TGSendMessage(tgHandle,chatid,string,messageid);
 
                 cache_delete(cache_chats,dbHandle);
@@ -120,10 +125,11 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             }
         }
         else if(!strfind(message,"/help")){
-            TGSendMessage(tgHandle,chatid,"Список доступных команд\n\n/stats - просмотр статистики чата\n/statsme - просмотр личной статистики в чате",messageid);
+            TGSendMessage(tgHandle,chatid,"Список доступных команд\n\n/stats - просмотр статистики чата\n/statsme - просмотр личной статистики в чате\n/updates - просмотр последнего обновления бота\n/top - рейтинг участников чата",messageid);
         }
         else if(!strfind(message,"/updates")){
             new Cache:cache_updates=mysql_query(dbHandle,"select`text`from`updates`order by`id`desc",true);
+
             if(cache_get_row_count(dbHandle)){
                 new text[1024];
 
@@ -135,6 +141,39 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             }
             else{
                 TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #3",messageid);
+            }
+        }
+        else if(!strfind(message,"/top")){
+            mysql_format(dbHandle,query,sizeof(query),"select`username`,`messages`,DAY(NOW())-DAY(`dateofregister`)as`days`from`users`where`chatid`='%e'order by`messages`desc limit 10",_:chatid);
+            cache_users=mysql_query(dbHandle,query,true);
+
+            if(cache_get_row_count(dbHandle)){
+                new localUsername[24],
+                    messages,
+                    days;
+
+                new tempString[48-(2*4)+2+24+11+11],
+                    string[28+2*sizeof(tempString)*10];
+
+                strcat(string,"Рейтинг участников чата\n\n");
+
+                for(new i=0; i<cache_get_row_count(dbHandle); i++){
+                    cache_get_field_content(i,"username",localUsername,dbHandle,sizeof(username));
+                    messages=cache_get_field_content_int(i,"messages",dbHandle);
+                    days=cache_get_field_content_int(i,"days",dbHandle);
+
+                    new Float:messagesperday=float(messages)/days;
+
+                    format(tempString,sizeof(tempString),"%i. @%s (%i сообщений, %.2f сообщений в день)\n",i+1,username,messages,messagesperday);
+                    strcat(string,tempString);
+                }
+
+                TGSendMessage(tgHandle,chatid,string,messageid);
+
+                cache_delete(cache_users,dbHandle);
+            }
+            else{
+                TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #4",messageid);
             }
         }
 
