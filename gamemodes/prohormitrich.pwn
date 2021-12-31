@@ -21,6 +21,7 @@ main(){
         dbHandle=mysql_connect(MYSQL_HOST,MYSQL_USER,MYSQL_DATABASE,MYSQL_PASSWORD);
         switch(mysql_errno(dbHandle)){
             case 0:{
+                mysql_set_charset("utf8",dbHandle);
                 printf("Connected to database");
             }
             default:{
@@ -100,7 +101,7 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
                 new messages,
                     dateofregister[32],
                     days;
-                    
+
                 messages=cache_get_field_content_int(0,"messages",dbHandle);
                 cache_get_field_content(0,"dateofregister",dateofregister,dbHandle,sizeof(dateofregister));
                 days=cache_get_field_content_int(0,"days",dbHandle);
@@ -122,7 +123,19 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             TGSendMessage(tgHandle,chatid,"Список доступных команд\n\n/stats - просмотр статистики чата\n/statsme - просмотр личной статистики в чате",messageid);
         }
         else if(!strfind(message,"/updates")){
-            TGSendMessage(tgHandle,chatid,"Обновление 0.1\n\nДобавлен счётчик сообщений группы и пользователей.\nДобавлены команды /stats и /statsme",messageid);
+            new Cache:cache_updates=mysql_query(dbHandle,"select`text`from`updates`order by`id`desc",true);
+            if(cache_get_row_count(dbHandle)){
+                new text[1024];
+
+                cache_get_field_content(0,"text",text,dbHandle,sizeof(text));
+
+                TGSendMessage(tgHandle,chatid,text,messageid);
+
+                cache_delete(cache_updates,dbHandle);
+            }
+            else{
+                TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #3",messageid);
+            }
         }
 
         printf("[%s] %s(%d): %s",_:chatid,username,_:fromid,message);
