@@ -103,22 +103,41 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             cache_chats=mysql_query(dbHandle,query,true);
 
             if(cache_get_row_count(dbHandle)){
-                new messages,
-                    dateofregister[32],
-                    days;
+                mysql_format(dbHandle,query,sizeof(query),"select count(`id`)as`registeredusers`from`users`where`chatid`='%e'",_:chatid);
+                cache_users=mysql_query(dbHandle,query,true);
 
-                messages=cache_get_field_content_int(0,"messages",dbHandle);
-                cache_get_field_content(0,"dateofregister",dateofregister,dbHandle,sizeof(dateofregister));
-                days=cache_get_field_content_int(0,"days",dbHandle);
+                if(cache_get_row_count(dbHandle)){
+                    new registeredusers;
 
-                new Float:messagesperday=float(messages)/days;
+                    registeredusers=cache_get_field_content_int(0,"registeredusers",dbHandle);
 
-                new string[2*139-(2*2)+32+11];
-                
-                format(string,sizeof(string),"Статистика чата\n\nДата регистрации чата - %s\nКоличество сообщений с момента регистрации - %i\nСреднее количество сообщений в день - %.2f\n%i",dateofregister,messages,messagesperday);
-                TGSendMessage(tgHandle,chatid,string,messageid);
+                    cache_delete(cache_users,dbHandle);
+                    cache_set_active(cache_chats,dbHandle);
 
-                cache_delete(cache_chats,dbHandle);
+                    new messages,
+                        dateofregister[32],
+                        days;
+
+                    messages=cache_get_field_content_int(0,"messages",dbHandle);
+                    cache_get_field_content(0,"dateofregister",dateofregister,dbHandle,sizeof(dateofregister));
+                    days=cache_get_field_content_int(0,"days",dbHandle);
+
+                    new Float:messagesperday=float(messages)/days;
+
+                    new totalusers;
+
+                    totalusers=TGGetChatMembersCount(tgHandle,chatid);
+
+                    new string[2*196-(2*2)+32+11];
+                    
+                    format(string,sizeof(string),"Статистика чата\n\nДата регистрации чата - %s\nКоличество сообщений с момента регистрации - %i\nСреднее количество сообщений в день - %.2f\nКоличество участников чата - %i (%i зарегистрированных)",dateofregister,messages,messagesperday,totalusers,registeredusers);
+                    TGSendMessage(tgHandle,chatid,string,messageid);
+
+                    cache_delete(cache_chats,dbHandle);
+                }
+                else{
+                    TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #5",messageid);
+                }
             }
             else{
                 TGSendMessage(tgHandle,chatid,"Произошла ошибка при обработке вашего запроса!\n\nОшибка #1",messageid);
