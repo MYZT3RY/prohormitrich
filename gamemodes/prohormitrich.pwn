@@ -4,12 +4,12 @@
 #include <string>
 #include <float>
 
-#define TG_BOT_TOKEN "2003549499:AAEH0TD_KT8ns2Z9Nez3FYzl7OGuUMAHchs"
+#define TG_BOT_TOKEN ""
 
 #define MYSQL_HOST "localhost"
-#define MYSQL_USER "prohor"
+#define MYSQL_USER "root"
 #define MYSQL_DATABASE "prohormitrich"
-#define MYSQL_PASSWORD "AW22rr03@!!#qwed24"
+#define MYSQL_PASSWORD ""
 
 new TGBot:tgHandle,
     dbHandle;
@@ -73,7 +73,7 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
         }
 
         if(!strfind(message,"/statsme")){
-            mysql_format(dbHandle,query,sizeof(query),"select*,DAY(NOW())-DAY(`dateofregister`)as`days`from`users`where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
+            mysql_format(dbHandle,query,sizeof(query),"select*,DATEDIFF(NOW(),`dateofregister`)as`days`from`users`where`userid`='%i'and`chatid`='%e'",_:fromid,_:chatid);
             cache_users=mysql_query(dbHandle,query,true);
 
             if(cache_get_row_count(dbHandle)){
@@ -99,7 +99,7 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             }
         }
         else if(!strfind(message,"/stats")){
-            mysql_format(dbHandle,query,sizeof(query),"select*,DAY(NOW())-DAY(`dateofregister`)as`days`from`chats`where`id`='%e'",_:chatid);
+            mysql_format(dbHandle,query,sizeof(query),"select*,DATEDIFF(NOW(),`dateofregister`)as`days`from`chats`where`id`='%e'",_:chatid);
             cache_chats=mysql_query(dbHandle,query,true);
 
             if(cache_get_row_count(dbHandle)){
@@ -163,7 +163,7 @@ public OnTGMessage(TGBot:bot,TGUser:fromid,TGMessage:messageid){
             }
         }
         else if(!strfind(message,"/top")){
-            mysql_format(dbHandle,query,sizeof(query),"select`username`,`messages`,DAY(NOW())-DAY(`dateofregister`)as`days`from`users`where`chatid`='%e'order by`messages`desc limit 10",_:chatid);
+            mysql_format(dbHandle,query,sizeof(query),"select`username`,`messages`,DATEDIFF(NOW(),`dateofregister`)as`days`from`users`where`chatid`='%e'order by`messages`desc limit 10",_:chatid);
             cache_users=mysql_query(dbHandle,query,true);
 
             if(cache_get_row_count(dbHandle)){
